@@ -13,7 +13,7 @@ m=500;
 dt = T/(m-1);
 t=linspace(0,T,m);
 % penalization of the interaction kernel
-gamma=0.01;
+gamma=0.001;
 
 X_a=zeros(N,m);
 X_a(:,1)=p;
@@ -45,8 +45,12 @@ for k=1:m-1
     % evolution
     X_a(:,k+1)=X_a(:,k)+((dt)/(N))*s1;
 end
+y=p;
+[X,Y]=meshgrid(p,y);
+figure(1);
+mesh(X,Y,a2)
 
-figure(1)
+figure(2)
 plot(t,X_a)
 % title('Evolution')
 % xlabel('time')

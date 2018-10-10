@@ -2,29 +2,36 @@ clc
 clear all
 close all
 
-load('ICaij')
+% load('ICaij')
+gamma=1;
+xd=0.4;
+N=100;
 bound_a=-1; bound_b=1;
 
-x=p';
-a=a2;
-%% SOLUTION OF PDE
-T=2000;
-NN=200;
+figure(1)
+x=linspace(-1,1,N);
+[X,Y]=meshgrid(x,x);
+a=(xd-Y).*(X-Y)/1;
+surf(X,Y,a)
+print('-depsc2','gamma1')
+% contourf(X,Y,a)
+% colorbar
+
+T=150;
+NN=100;
 
 dx=(bound_b-bound_a)/NN;
 xx=bound_a+(dx/2):dx:bound_b-(dx/2); % cells' centers
 xx_g=[xx(1)-dx,xx,xx(end)+dx]; % vector with ghosts cells
 x_g=[x(1)-dx,x,x(end)+dx];
 
-vmax=0.1;
+vmax=16;
 % CFL condition
-dt=0.1*dx/vmax;
+dt=1*dx/vmax;
 m=ceil(T/dt); %time steps
 dt=T/m;
 
-% f=@(x) exp(-((x).^2)/0.01);
-% f=@(x) 1/NN(count)+0*x;
-f=@(x) ((x+1)/2).*(x<0)+(((1-x)/2)).*(x>=0);
+f=@(x) ((4)/3).*(x<0).*(x>-0.75)+(((1-x)/2)).*(x>=0).*(x<0);
 
 f0=f(xx);
 f_c=f(xx); % function evaluated on the centers of cells
@@ -35,7 +42,9 @@ a=[a(1,:);a;a(end,:)];
 
 funz=f_c;
 speed=zeros(1,m);
-for k=1:m
+U = zeros(m,N);
+U(1,:)=f_c(2:N+1);
+for k=2:m
     intf=interp1(xx,f_c(2:end-1),x,'pchip');
     if sum(intf)==Inf || sum(isnan(intf))~=0
         f_c=funz;
@@ -66,18 +75,30 @@ for k=1:m
     funz=f_c;
 
     speed(k)=dx*sum(((xx-xd).^2).*f_c(2:end-1));
+
+    U(k,:) = f_c(2:N+1);
 end
-
-figure(1)
-plot(xx,f0,'b',xx,f_c(2:end-1),'r','LineWidth',1)% ,'LineWidth',1)
-hold on
-plot([0.4,0.4],[0,4.5],'m','LineWidth',0.6)
-% title(['N= ',num2str(NN(count)),'  T = ',num2str(T)])
-% legend('f(0)','f(T)')
-% axis([-1 1 0 1])
-print('-depsc2','PDE_12')
-
 figure(2)
-plot(linspace(0,T,m),speed,'b','LineWidth',1)
+plot(xx,f0,'b:',xx,f_c(2:end-1),'r--','LineWidth',1.5)
+% title(['t = ' num2str(dt*k)])
+hold on
+plot([0.4,0.4],[0,100],'m','LineWidth',0.6)
+axis([-1 1 0 max(f_c)*(1.1)])
+hold off
+hh=legend('$u_0(x)$','$u(T,x)$','$\overline x$');
+set(hh,'FontSize',19,'interpreter','latex','Location','NorthWest')
+print('-depsc2','PDE1')
+
+figure(3)
+semilogy(linspace(0,T,m),speed,'b','LineWidth',1)
 print('-depsc2','rcost1')
 save('i2_ICaij')
+
+figure(4)
+t = (1:m)*dt;
+[XX,TT]=meshgrid(x,t);
+contourf(XX,TT,U,100,'LineStyle','none')
+colorbar
+hold on
+plot(xd*ones(1,m),linspace(0,150,m),'r--','LineWidth',2)
+print('-depsc2','density1')

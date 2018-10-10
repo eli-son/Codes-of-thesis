@@ -5,22 +5,23 @@ close all
 %% INTERACTION KERNEL
 
 N=100; % number of cells/agents
-T=100;
+T=250;
 bound_a=-1;
 bound_b=1;
 
 dx=(bound_b-bound_a)/N;
 x=linspace(bound_a,bound_b,N);
 
-vmax=0.01;
+vmax=4;
 % CFL condition
-dt=0.01*dx/vmax;
+dt=dx/vmax;
 m=ceil(T/dt); %time steps
 dt=T/m;
 
 xd=0.4;
 % penalization of the interaction kernel
-gamma=0.01;
+gamma=0.1;
+% gamma=1;
 
 C=zeros(N^2,N^2);
 b=zeros(N^2,1);
@@ -35,9 +36,10 @@ cvx_begin
     cvx_precision high
     variable a1(N^2,1)
 
-    minimize ( (norm(a1,1)) ) % minimize ( (norm(a1,2)) )
+    minimize ( (norm(a1,Inf)) )
     subject to
         C*a1 == b
+        abs(a1) <= 2
 cvx_end
 a=reshape(a1,N,N);
 a=a';
@@ -46,7 +48,7 @@ y=x;
 [X,Y]=meshgrid(x,y);
 figure(1);
 mesh(X,Y,a)
-print('-depsc2','aij_1')
+print('-depsc2','aij_inf')
 % title('Plot of interaction kernel')
 
 save('i1','N','x','a','bound_a','bound_b','T','m','dt')
